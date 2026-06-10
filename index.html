@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Varetelling</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f4f4f4;
+  padding: 20px;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 16px;
+}
+
+button {
+  background: #0078D4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+}
+
+h2 {
+  margin-bottom: 10px;
+}
+</style>
+
+<!-- ✅ SCANNER SCRIPT -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+</head>
+
+<body>
+
+<h2>📦 Varetelling</h2>
+
+<button onclick="startScanner()">📷 Start scanning</button>
+<div id="reader" style="width:100%; margin-top:10px;"></div>
+
+<input id="barcode" placeholder="Strekkode">
+<input id="name" placeholder="Navn på vare">
+
+<select id="unit">
+  <option value="stk">stk</option>
+  <option value="kg">kg</option>
+  <option value="rull">rull</option>
+  <option value="krt">kartong (krt)</option>
+</select>
+
+<input id="amount" type="number" step="0.01" placeholder="Antall">
+
+<button onclick="addItem()">Registrer</button>
+
+<input id="search" placeholder="🔍 Søk..." oninput="render()">
+
+<button onclick="clearAll()">🗑 Tøm lager</button>
+
+<h3>Lager:</h3>
+<div id="list"></div>
+
+<script>
+
+const barcode = document.getElementById("barcode");
+const name = document.getElementById("name");
+const unit = document.getElementById("unit");
+const amount = document.getElementById("amount");
+const list = document.getElementById("list");
+
+let inventory = JSON.parse(localStorage.getItem("inv") || "{}");
+
+function save() {
