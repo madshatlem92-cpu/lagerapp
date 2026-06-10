@@ -75,3 +75,157 @@ const list = document.getElementById("list");
 let inventory = JSON.parse(localStorage.getItem("inv") || "{}");
 
 function save() {
+  localStorage.setItem("inv", JSON.stringify(inventory));
+}
+
+// ✅ Autofyll når du skriver kode
+barcode.addEventListener("input", function () {
+  let b = barcode.value;
+  if (inventory[b]) {
+    name.value = inventory[b].name;
+    unit.value = inventory[b].unit;
+    amount.focus();
+  }
+});
+
+// ✅ Registrer vare
+function addItem() {
+  let b = barcode.value.trim();
+  let n = name.value.trim();
+  let u = unit.value;
+  let a = parseFloat(amount.value) || 1;
+
+  if (!b) {
+    alert("Scan eller skriv strekkode");
+    return;
+  }
+
+  if (!inventory[b]) {
+    inventory[b] = {
+      name: n || "Ukjent",
+      unit: u,
+      stock: 0
+    };
+  }
+
+  inventory[b].stock += a;
+
+  save();
+  render();
+
+  barcode.value = "";
+  name.value = "";
+  amount.value = "";
+
+  barcode.focus();
+}
+
+// ✅ Vis lager
+function render() {
+  let search = document.getElementById("search").value.toLowerCase();
+  list.innerHTML = "";
+
+  let items = Object.entries(inventory);
+
+  items.sort((a,b)=> a[1].name.localeCompare(b[1].name));
+
+  for (let [k, i] of items) {
+    if (
+      i.name.toLowerCase().includes(search) ||
+      k.includes(search) ||
+      i.unit.toLowerCase().includes(search)
+    ) {
+
+      let warn = i.stock < 5 
+        ? "background:#ffe5e5; border-left:5px solid red;" 
+        : "background:white;";
+
+      list.innerHTML += `
+        <div style="${warn} padding:10px; margin-top:10px; border-radius:10px;">
+          
+          <b>${i.name}</b><br>
+          <span style="color:gray;">${k}</span><br><br>
+
+          <b style="font-size:22px;">${i.stock} ${i.unit}</b>
+
+          <br><br>
+
+          <button onclick="quickAdd('${k}')">+1</button>
+          <button onclick="removeOne('${k}')">➖</button>
+          <button onclick="removeItem('${k}')">❌</button>
+        </div>
+      `;
+    }
+  }
+}
+
+// ✅ +1
+function quickAdd(code) {
+  inventory[code].stock += 1;
+  save();
+  render();
+}
+
+// ✅ trekk fra
+function removeOne(code) {
+  if (inventory[code].stock > 1) {
+    inventory[code].stock -= 1;
+  } else {
+    delete inventory[code];
+  }
+
+  save();
+  render();
+}
+
+// ✅ slett
+function removeItem(code) {
+  if (confirm("Slette varen?")) {
+    delete inventory[code];
+    save();
+    render();
+  }
+}
+
+// ✅ tøm alt
+function clearAll() {
+  if (confirm("Slette ALT lager?")) {
+    inventory = {};
+    save();
+    render();
+  }
+}
+
+// ✅ SCANNER
+function startScanner() {
+  const reader = document.getElementById("reader");
+  reader.innerHTML = "";
+
+  const html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (decodedText) => {
+      barcode.value = decodedText;
+      html5QrCode.stop();
+      amount.focus();
+    }
+  ).catch(err => {
+    alert("Scanner feil: " + err);
+  });
+}
+
+// ENTER = registrer
+amount.addEventListener("keypress", function(e){
+  if (e.key === "Enter") {
+    addItem();
+  }
+});
+
+render();
+
+</script>
+
+</body>
+</html>
