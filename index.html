@@ -61,6 +61,8 @@ h2 {
 
 <button onclick="clearAll()">🗑 Tøm lager</button>
 
+<button onclick="exportToExcel()">📊 Last ned Excel</button>
+
 <h3>Lager:</h3>
 <div id="list"></div>
 
@@ -221,6 +223,23 @@ amount.addEventListener("keypress", function(e){
   if (e.key === "Enter") {
     addItem();
   }
+}
+function exportToExcel() {
+  let csv = "Strekkode,Navn,Antall,Enhet\n";
+
+  for (let code in inventory) {
+    let item = inventory[code];
+    csv += `${code},${item.name},${item.stock},${item.unit}\n`;
+  }
+
+  let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  let url = URL.createObjectURL(blob);
+
+  let link = document.createElement("a");
+  link.href = url;
+  link.download = "lager.csv";
+  link.click();
+}                        
 });
 
 render();
