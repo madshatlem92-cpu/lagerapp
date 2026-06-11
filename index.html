@@ -26,12 +26,14 @@ button {
   border-radius: 8px;
 }
 
-h2 {
-  margin-bottom: 10px;
+.item {
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background: white;
 }
 </style>
 
-<!-- ✅ SCANNER SCRIPT -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 </head>
@@ -59,9 +61,8 @@ h2 {
 
 <input id="search" placeholder="🔍 Søk..." oninput="render()">
 
-<button onclick="clearAll()">🗑 Tøm lager</button>
-
 <button onclick="exportToExcel()">📊 Last ned Excel</button>
+<button onclick="clearAll()">🗑 Tøm lager</button>
 
 <h3>Lager:</h3>
 <div id="list"></div>
@@ -80,17 +81,16 @@ function save() {
   localStorage.setItem("inv", JSON.stringify(inventory));
 }
 
-// ✅ Autofyll når du skriver kode
-barcode.addEventListener("input", function () {
+// Autofyll
+barcode.addEventListener("input", function() {
   let b = barcode.value;
   if (inventory[b]) {
     name.value = inventory[b].name;
     unit.value = inventory[b].unit;
-    amount.focus();
   }
 });
 
-// ✅ Registrer vare
+// Registrer vare
 function addItem() {
   let b = barcode.value.trim();
   let n = name.value.trim();
@@ -122,13 +122,12 @@ function addItem() {
   barcode.focus();
 }
 
-// ✅ Vis lager
+// Vis lager
 function render() {
   let search = document.getElementById("search").value.toLowerCase();
   list.innerHTML = "";
 
   let items = Object.entries(inventory);
-
   items.sort((a,b)=> a[1].name.localeCompare(b[1].name));
 
   for (let [k, i] of items) {
@@ -138,17 +137,18 @@ function render() {
       i.unit.toLowerCase().includes(search)
     ) {
 
-      let warn = i.stock < 5 
-        ? "background:#ffe5e5; border-left:5px solid red;" 
+      let style = i.stock < 5
+        ? "background:#ffe5e5; border-left:5px solid red;"
         : "background:white;";
 
       list.innerHTML += `
-        <div style="${warn} padding:10px; margin-top:10px; border-radius:10px;">
-          
-          <b>${i.name}</b><br>
+        <div class="item" style="${style}">
+          <b style="font-size:18px;">${i.name}</b><br>
           <span style="color:gray;">${k}</span><br><br>
 
-          <b style="font-size:22px;">${i.stock} ${i.unit}</b>
+          <span style="font-size:22px; font-weight:bold;">
+            ${i.stock} ${i.unit}
+          </span>
 
           <br><br>
 
@@ -161,14 +161,14 @@ function render() {
   }
 }
 
-// ✅ +1
+// +1
 function quickAdd(code) {
   inventory[code].stock += 1;
   save();
   render();
 }
 
-// ✅ trekk fra
+// trekk fra
 function removeOne(code) {
   if (inventory[code].stock > 1) {
     inventory[code].stock -= 1;
@@ -180,7 +180,7 @@ function removeOne(code) {
   render();
 }
 
-// ✅ slett
+// slett
 function removeItem(code) {
   if (confirm("Slette varen?")) {
     delete inventory[code];
@@ -189,7 +189,7 @@ function removeItem(code) {
   }
 }
 
-// ✅ tøm alt
+// tøm alt
 function clearAll() {
   if (confirm("Slette ALT lager?")) {
     inventory = {};
@@ -198,7 +198,27 @@ function clearAll() {
   }
 }
 
-// ✅ SCANNER
+// Excel eksport
+function exportToExcel() {
+  let date = new Date().toISOString().split("T")[0];
+
+  let csv = "Strekkode;Navn;Antall;Enhet\n";
+
+  for (let code in inventory) {
+    let item = inventory[code];
+    csv += `${code};${item.name};${item.stock};${item.unit}\n`;
+  }
+
+  let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  let url = URL.createObjectURL(blob);
+
+  let link = document.createElement("a");
+  link.href = url;
+  link.download = "lager_" + date + ".csv";
+  link.click();
+}
+
+// scanner
 function startScanner() {
   const reader = document.getElementById("reader");
   reader.innerHTML = "";
@@ -218,30 +238,14 @@ function startScanner() {
   });
 }
 
-// ENTER = registrer
-amount.addEventListener("keypress", function(e){
+// enter = registrer
+amount.addEventListener("keypress", function(e) {
   if (e.key === "Enter") {
     addItem();
   }
-}
-function exportToExcel() {
-  let csv = "Strekkode,Navn,Antall,Enhet\n";
-
-  for (let code in inventory) {
-    let item = inventory[code];
-    csv += `${code},${item.name},${item.stock},${item.unit}\n`;
-  }
-
-  let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  let url = URL.createObjectURL(blob);
-
-  let link = document.createElement("a");
-  link.href = url;
-  link.download = "lager.csv";
-  link.click();
-}                        
 });
 
+// start
 render();
 
 </script>
